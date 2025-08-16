@@ -98,6 +98,62 @@ You can also run the application using Docker.
     ```
 *   `GET /metrics`: Exposes application metrics in Prometheus format.
 
+## Database Schema
+
+This service persists starred repositories into a single table named `Repository`.
+
+```mermaid
+erDiagram
+  Repository {
+    Int id PK "autoincrement"
+    BigInt githubId UK "GitHub repository ID"
+    String name
+    String fullName
+    String description "nullable"
+    String url
+    String language "nullable"
+    Int stars
+    String readmeContent "nullable"
+    DateTime readmeFetchedAt "nullable"
+    DateTime repoCreatedAt
+    DateTime repoPushedAt
+    DateTime repoStarredAt
+    DateTime createdAt "default now()"
+    DateTime updatedAt "auto updated"
+  }
+```
+
+Prisma model source: see [prisma/schema.prisma](prisma/schema.prisma:14)
+
+```prisma
+model Repository {
+  id               Int       @id @default(autoincrement())
+  githubId         BigInt    @unique
+  name             String
+  fullName         String
+  description      String?
+  url              String
+  language         String?
+  stars            Int
+  readmeContent    String?
+  readmeFetchedAt  DateTime?
+  repoCreatedAt    DateTime
+  repoPushedAt     DateTime
+  repoStarredAt    DateTime
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+```
+
+Notes
+- Primary key: `id` (autoincrement).
+- Unique key: `githubId` (ensures one row per GitHub repository).
+- Optional fields: `description`, `language`, `readmeContent`, `readmeFetchedAt`.
+- Temporal metadata:
+  - `repoCreatedAt` — repository creation time on GitHub.
+  - `repoPushedAt` — last push time on GitHub.
+  - `repoStarredAt` — when this user starred the repository.
+  - `createdAt` / `updatedAt` — row timestamps (managed by Prisma).
 ## Environment Variables
 
 | Variable              | Description                                                                                                 | Default         |

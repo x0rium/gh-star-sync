@@ -128,6 +128,8 @@ export class GithubSyncService implements OnModuleInit {
       );
       this.logger.log(`Fetched ${githubReposData.length} repositories.`);
       this.logger.log('Step 2/4: Fetching current state from DB...');
+      // Cast to 'any' to bypass TS not seeing generated Prisma model delegates on PrismaService
+      // in some NodeNext setups. At runtime, Prisma exposes `repository` correctly.
       const dbRepos: any[] = await (this.prisma as any).repository.findMany();
       const dbReposMap = new Map<bigint, any>(
         dbRepos.map((repo) => [repo.githubId, repo]),
@@ -190,6 +192,7 @@ export class GithubSyncService implements OnModuleInit {
       this.metricsService.readmeFetchTotal.inc(readmeResults.size);
 
       this.logger.log('Step 4/4: Synchronizing with the database...');
+      // Cast to 'any' to work around TS not resolving PrismaClient methods on extended PrismaService under NodeNext
       await (this.prisma as any).$transaction(async (tx: any) => {
         if (reposToCreate.length > 0) {
           const dataToCreate = reposToCreate.map((repo) => ({
